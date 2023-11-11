@@ -27,8 +27,9 @@ typedef struct color_t {
 static color current_color;
 static double x = WIDTH / 2;
 static double y = HEIGHT / 2;
-static int pen_state = 1;
-static double direction = 0.0;
+static int pen_state = 1;	//1 = down, 0 = up... basically a boolean
+static double direction = 0.0; //angle in degrees. positive changes are clockwise, negatives are counter
+//I wonder if it has a catch to modulo 360.0
 
 int yylex(void);
 int yyerror(const char* s);
@@ -37,6 +38,8 @@ int run(void* data);
 void prompt();
 void penup();
 void pendown();
+void go2(double newX, double newY); //our two functions we gotta add in
+void where();
 void move(int num);
 void turn(int dir);
 void output(const char* s);
@@ -83,7 +86,7 @@ statement:		command SEP					{ prompt(); }
 		;
 command:		PENUP						{ penup(); }
 		;
-expression_list:	expression	// Complete these and any missing rules
+expression_list:	expression
 		| 	expression expression_list
 		;
 expression:		NUMBER PLUS expression				{ $$ = $1 + $3; }
@@ -119,6 +122,24 @@ void pendown() {
 	event.type = PEN_EVENT;
 	event.user.code = 1;
 	SDL_PushEvent(&event);
+}
+
+//Let's put goto and where here
+void go2(double newX, double newY) {
+		if(!pen_state) {
+			x = newX;
+			y = newY;
+		} else {
+			event.type = DRAW_EVENT;
+			event.user.code = 5;
+			event.user.data1 = x;
+			event.user.data2 = y;
+			SDL_PushEvent(&event);
+		}
+}
+
+void where() {
+		printf("Current location: x = %lf; y = %lf", x, y);
 }
 
 void move(int num){
@@ -183,6 +204,8 @@ void startup(){
 			}
 			if(e.type == PEN_EVENT){
 				if(e.user.code == 2){
+					//so this is just reorienting the pen
+					//which is also done for some reason when we clear
 					double degrees = ((int)e.user.data1) * M_PI / 180.0;
 					direction += degrees;
 				}
@@ -190,6 +213,7 @@ void startup(){
 			}
 			if(e.type == DRAW_EVENT){
 				if(e.user.code == 1){
+					//This is where we're actually moving the pen
 					int num = (int)event.user.data1;
 					double x2 = x + num * cos(direction);
 					double y2 = y + num * sin(direction);
@@ -207,6 +231,19 @@ void startup(){
 					SDL_SetTextureColorMod(texture, current_color.r, current_color.g, current_color.b);
 					SDL_SetRenderTarget(rend, NULL);
 					SDL_RenderClear(rend);
+				} else if(e.user.code == 5) {
+					//I guess we could just use this regardless... we'll come back to that
+					double x2 = (double) event.user.data1,
+					y2 = (double) event.user.data2;
+
+					if (pen_state != 0) {
+						SDL_SetRenderTarget(rend, texture);
+						SDL_RenderDrawLine(rend, x, y, x2, y2);
+						SDL_SetRenderTarget(rend, NULL);
+						SDL_RenderCopy(rend, texture, NULL, NULL);
+						x = x2;
+						y = y2;
+					}
 				}
 			}
 			if(e.type == COLOR_EVENT){

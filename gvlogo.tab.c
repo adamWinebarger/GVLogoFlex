@@ -97,8 +97,9 @@ typedef struct color_t {
 static color current_color;
 static double x = WIDTH / 2;
 static double y = HEIGHT / 2;
-static int pen_state = 1;
-static double direction = 0.0;
+static int pen_state = 1;	//1 = down, 0 = up... basically a boolean
+static double direction = 0.0; //angle in degrees. positive changes are clockwise, negatives are counter
+//I wonder if it has a catch to modulo 360.0
 
 int yylex(void);
 int yyerror(const char* s);
@@ -107,6 +108,8 @@ int run(void* data);
 void prompt();
 void penup();
 void pendown();
+void go2(int x, int y); //our two functions we gotta add in
+void where();
 void move(int num);
 void turn(int dir);
 void output(const char* s);
@@ -116,7 +119,7 @@ void save(const char* path);
 void shutdown();
 
 
-#line 120 "gvlogo.tab.c"
+#line 123 "gvlogo.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -139,7 +142,86 @@ void shutdown();
 #  endif
 # endif
 
-#include "gvlogo.tab.h"
+
+/* Debug traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int yydebug;
+#endif
+
+/* Token kinds.  */
+#ifndef YYTOKENTYPE
+# define YYTOKENTYPE
+  enum yytokentype
+  {
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    SEP = 258,                     /* SEP  */
+    PENUP = 259,                   /* PENUP  */
+    PENDOWN = 260,                 /* PENDOWN  */
+    PRINT = 261,                   /* PRINT  */
+    CHANGE_COLOR = 262,            /* CHANGE_COLOR  */
+    COLOR = 263,                   /* COLOR  */
+    CLEAR = 264,                   /* CLEAR  */
+    TURN = 265,                    /* TURN  */
+    LOOP = 266,                    /* LOOP  */
+    MOVE = 267,                    /* MOVE  */
+    NUMBER = 268,                  /* NUMBER  */
+    END = 269,                     /* END  */
+    SAVE = 270,                    /* SAVE  */
+    PLUS = 271,                    /* PLUS  */
+    SUB = 272,                     /* SUB  */
+    MULT = 273,                    /* MULT  */
+    DIV = 274,                     /* DIV  */
+    STRING = 275,                  /* STRING  */
+    QSTRING = 276                  /* QSTRING  */
+  };
+  typedef enum yytokentype yytoken_kind_t;
+#endif
+
+/* Value type.  */
+#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+union YYSTYPE
+{
+#line 53 "gvlogo.y"
+
+	float f;
+	char* s;
+
+#line 196 "gvlogo.tab.c"
+
+};
+typedef union YYSTYPE YYSTYPE;
+# define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
+#endif
+
+/* Location type.  */
+#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
+typedef struct YYLTYPE YYLTYPE;
+struct YYLTYPE
+{
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+};
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+#endif
+
+
+extern YYSTYPE yylval;
+extern YYLTYPE yylloc;
+
+int yyparse (void);
+
+
+
 /* Symbol kind.  */
 enum yysymbol_kind_t
 {
@@ -562,7 +644,7 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    76,    76,    78,    79,    81,    82,    84
+       0,    79,    79,    81,    82,    84,    85,    87
 };
 #endif
 
@@ -1240,31 +1322,31 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: statement_list END  */
-#line 76 "gvlogo.y"
+#line 79 "gvlogo.y"
                                                                         { printf("Program complete."); shutdown(); exit(0); }
-#line 1246 "gvlogo.tab.c"
+#line 1328 "gvlogo.tab.c"
     break;
 
   case 5: /* statement: command SEP  */
-#line 81 "gvlogo.y"
+#line 84 "gvlogo.y"
                                                                         { prompt(); }
-#line 1252 "gvlogo.tab.c"
+#line 1334 "gvlogo.tab.c"
     break;
 
   case 6: /* statement: error '\n'  */
-#line 82 "gvlogo.y"
+#line 85 "gvlogo.y"
                                                                         { yyerrok; prompt(); }
-#line 1258 "gvlogo.tab.c"
+#line 1340 "gvlogo.tab.c"
     break;
 
   case 7: /* command: PENUP  */
-#line 84 "gvlogo.y"
+#line 87 "gvlogo.y"
                                                                         { penup(); }
-#line 1264 "gvlogo.tab.c"
+#line 1346 "gvlogo.tab.c"
     break;
 
 
-#line 1268 "gvlogo.tab.c"
+#line 1350 "gvlogo.tab.c"
 
       default: break;
     }
@@ -1462,7 +1544,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 96 "gvlogo.y"
+#line 99 "gvlogo.y"
 
 
 int main(int argc, char** argv){
@@ -1489,6 +1571,15 @@ void pendown() {
 	event.type = PEN_EVENT;
 	event.user.code = 1;
 	SDL_PushEvent(&event);
+}
+
+//Let's put goto and where here
+void go2(int x, int y) {
+
+}
+
+void where() {
+
 }
 
 void move(int num){
