@@ -2,4 +2,4 @@
 
 bison -d gvlogo.y
 flex gvlogo.l
-clang *.c -lfl
+clang *.c -lfl `sdl2-config --cflags --libs`

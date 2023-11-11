@@ -75,7 +75,7 @@ void shutdown();
 
 program:		statement_list END				{ printf("Program complete."); shutdown(); exit(0); }
 		;
-statement_list:		statement					
+statement_list:		statement
 		|	statement statement_list
 		;
 statement:		command SEP					{ prompt(); }
@@ -83,8 +83,8 @@ statement:		command SEP					{ prompt(); }
 		;
 command:		PENUP						{ penup(); }
 		;
-expression_list:
-		|	// Complete these and any missing rules
+expression_list:	expression	// Complete these and any missing rules
+		| 	expression expression_list
 		;
 expression:		NUMBER PLUS expression				{ $$ = $1 + $3; }
 		|	NUMBER MULT expression				{ $$ = $1 * $3; }
@@ -110,13 +110,13 @@ void prompt(){
 }
 
 void penup(){
-	event.type = PEN_EVENT;		
+	event.type = PEN_EVENT;
 	event.user.code = 0;
 	SDL_PushEvent(&event);
 }
 
 void pendown() {
-	event.type = PEN_EVENT;		
+	event.type = PEN_EVENT;
 	event.user.code = 1;
 	SDL_PushEvent(&event);
 }
@@ -159,7 +159,7 @@ void startup(){
 	if (window == NULL){
 		yyerror("Can't create SDL window.\n");
 	}
-	
+
 	//rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
 	rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE);
 	SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
