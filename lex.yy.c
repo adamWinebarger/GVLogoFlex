@@ -440,11 +440,12 @@ char *yytext;
 #line 2 "gvlogo.l"
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "gvlogo.tab.h"
 
 extern void yyerror(const char* s);
-#line 447 "lex.yy.c"
 #line 448 "lex.yy.c"
+#line 449 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -661,11 +662,11 @@ YY_DECL
 		}
 
 	{
-#line 9 "gvlogo.l"
+#line 10 "gvlogo.l"
 
 
 
-#line 669 "lex.yy.c"
+#line 670 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -725,20 +726,20 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 12 "gvlogo.l"
+#line 13 "gvlogo.l"
 ;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 13 "gvlogo.l"
-{ yyerror("Lexing Syntax error.\n"); } 
+#line 14 "gvlogo.l"
+{ yyerror("Lexing Syntax error.\n"); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 15 "gvlogo.l"
+#line 16 "gvlogo.l"
 ECHO;
 	YY_BREAK
-#line 742 "lex.yy.c"
+#line 743 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1743,6 +1744,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 15 "gvlogo.l"
+#line 16 "gvlogo.l"
 
 

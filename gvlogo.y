@@ -85,6 +85,17 @@ statement:		command SEP					{ prompt(); }
 		|	error '\n' 					{ yyerrok; prompt(); }
 		;
 command:		PENUP						{ penup(); }
+		| 			PENDOWN					{pendown();}
+		|				PRINT STRING												{output($2); /*This might be wrong; may need to have it take a variable number of arguments. See cdir*/}
+		|				CHANGE_COLOR NUMBER NUMBER NUMBER		{change_color($2,$3,$4);}
+		|				COLOR NUMBER NUMBER NUMBER					{change_color($2,$3,$4); /*Are these just the same thing?*/}
+		|				CLEAR						{clear();}
+		|				TURN NUMBER 						{turn($2);}
+		|				LOOP						{printf("Loop functionality coming soon!\n");}
+		|				MOVE NUMBER 						{move($2);}
+		|				END 						{shutdown();}
+		|				SAVE STRING 						{save($2); /*May need to make use of STRING here*/}
+		|				SEP 						{;}
 		;
 expression_list:	expression
 		| 	expression expression_list
@@ -127,13 +138,13 @@ void pendown() {
 //Let's put goto and where here
 void go2(double newX, double newY) {
 		if(!pen_state) {
-			x = newX;
-			y = newY;
+			x =  newX;
+			y =  newY; //might have to do more work here
 		} else {
 			event.type = DRAW_EVENT;
 			event.user.code = 5;
-			event.user.data1 = x;
-			event.user.data2 = y;
+			event.user.data1 = (int) newX;
+			event.user.data2 = (int) newY;
 			SDL_PushEvent(&event);
 		}
 }
@@ -233,16 +244,16 @@ void startup(){
 					SDL_RenderClear(rend);
 				} else if(e.user.code == 5) {
 					//I guess we could just use this regardless... we'll come back to that
-					double x2 = (double) event.user.data1,
-					y2 = (double) event.user.data2;
+					int x2 = (int) event.user.data1,
+					y2 = (int) event.user.data2;
 
 					if (pen_state != 0) {
 						SDL_SetRenderTarget(rend, texture);
-						SDL_RenderDrawLine(rend, x, y, x2, y2);
+						SDL_RenderDrawLine(rend, x, y, (double) x2, (double) y2);
 						SDL_SetRenderTarget(rend, NULL);
 						SDL_RenderCopy(rend, texture, NULL, NULL);
-						x = x2;
-						y = y2;
+						x = (double) x2;
+						y = (double) y2;
 					}
 				}
 			}
