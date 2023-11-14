@@ -565,8 +565,8 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    79,    79,    81,    82,    84,    85,    87,    88,    89,
-      90,    91,    92,    93,    94,    95,    96,    97,    98
+       0,    80,    80,    82,    83,    85,    86,    88,    89,    90,
+      91,    92,    93,    94,    95,    96,    97,    98,    99
 };
 #endif
 
@@ -1256,91 +1256,91 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: statement_list END  */
-#line 79 "gvlogo.y"
+#line 80 "gvlogo.y"
                                                                         { printf("Program complete."); shutdown(); exit(0); }
 #line 1262 "gvlogo.tab.c"
     break;
 
   case 5: /* statement: command SEP  */
-#line 84 "gvlogo.y"
+#line 85 "gvlogo.y"
                                                                         { prompt(); }
 #line 1268 "gvlogo.tab.c"
     break;
 
   case 6: /* statement: error '\n'  */
-#line 85 "gvlogo.y"
+#line 86 "gvlogo.y"
                                                                         { yyerrok; prompt(); }
 #line 1274 "gvlogo.tab.c"
     break;
 
   case 7: /* command: PENUP  */
-#line 87 "gvlogo.y"
+#line 88 "gvlogo.y"
                                                                         { penup(); }
 #line 1280 "gvlogo.tab.c"
     break;
 
   case 8: /* command: PENDOWN  */
-#line 88 "gvlogo.y"
+#line 89 "gvlogo.y"
                                                                                 {pendown();}
 #line 1286 "gvlogo.tab.c"
     break;
 
   case 9: /* command: PRINT STRING  */
-#line 89 "gvlogo.y"
+#line 90 "gvlogo.y"
                                                                                                                                                         {output((yyvsp[0].s)); /*This might be wrong; may need to have it take a variable number of arguments. See cdir*/}
 #line 1292 "gvlogo.tab.c"
     break;
 
   case 10: /* command: CHANGE_COLOR NUMBER NUMBER NUMBER  */
-#line 90 "gvlogo.y"
+#line 91 "gvlogo.y"
                                                                                                 {change_color((yyvsp[-2].f),(yyvsp[-1].f),(yyvsp[0].f));}
 #line 1298 "gvlogo.tab.c"
     break;
 
   case 11: /* command: COLOR NUMBER NUMBER NUMBER  */
-#line 91 "gvlogo.y"
+#line 92 "gvlogo.y"
                                                                                                                 {change_color((yyvsp[-2].f),(yyvsp[-1].f),(yyvsp[0].f)); /*Are these just the same thing?*/}
 #line 1304 "gvlogo.tab.c"
     break;
 
   case 12: /* command: CLEAR  */
-#line 92 "gvlogo.y"
+#line 93 "gvlogo.y"
                                                                                                 {clear();}
 #line 1310 "gvlogo.tab.c"
     break;
 
   case 13: /* command: TURN NUMBER  */
-#line 93 "gvlogo.y"
+#line 94 "gvlogo.y"
                                                                                                         {turn((yyvsp[0].f));}
 #line 1316 "gvlogo.tab.c"
     break;
 
   case 14: /* command: LOOP  */
-#line 94 "gvlogo.y"
+#line 95 "gvlogo.y"
                                                                                                 {printf("Loop functionality coming soon!\n");}
 #line 1322 "gvlogo.tab.c"
     break;
 
   case 15: /* command: MOVE NUMBER  */
-#line 95 "gvlogo.y"
+#line 96 "gvlogo.y"
                                                                                                         {move((yyvsp[0].f));}
 #line 1328 "gvlogo.tab.c"
     break;
 
   case 16: /* command: END  */
-#line 96 "gvlogo.y"
+#line 97 "gvlogo.y"
                                                                                                 {shutdown();}
 #line 1334 "gvlogo.tab.c"
     break;
 
   case 17: /* command: SAVE STRING  */
-#line 97 "gvlogo.y"
+#line 98 "gvlogo.y"
                                                                                                         {save((yyvsp[0].s)); /*May need to make use of STRING here*/}
 #line 1340 "gvlogo.tab.c"
     break;
 
   case 18: /* command: SEP  */
-#line 98 "gvlogo.y"
+#line 99 "gvlogo.y"
                                                                                                 {;}
 #line 1346 "gvlogo.tab.c"
     break;
@@ -1544,7 +1544,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 110 "gvlogo.y"
+#line 111 "gvlogo.y"
 
 
 int main(int argc, char** argv){

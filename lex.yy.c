@@ -322,6 +322,9 @@ void yyfree ( void *  );
 #define YY_AT_BOL() (YY_CURRENT_BUFFER_LVALUE->yy_at_bol)
 
 /* Begin user sect3 */
+
+#define yywrap() (/*CONSTCOND*/1)
+#define YY_SKIP_YYWRAP
 typedef flex_uint8_t YY_CHAR;
 
 FILE *yyin = NULL, *yyout = NULL;
@@ -444,8 +447,8 @@ char *yytext;
 #include "gvlogo.tab.h"
 
 extern void yyerror(const char* s);
-#line 448 "lex.yy.c"
-#line 449 "lex.yy.c"
+#line 451 "lex.yy.c"
+#line 452 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -662,11 +665,11 @@ YY_DECL
 		}
 
 	{
-#line 10 "gvlogo.l"
+#line 13 "gvlogo.l"
 
 
 
-#line 670 "lex.yy.c"
+#line 673 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -726,20 +729,20 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 13 "gvlogo.l"
+#line 16 "gvlogo.l"
 ;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 14 "gvlogo.l"
+#line 17 "gvlogo.l"
 { yyerror("Lexing Syntax error.\n"); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 16 "gvlogo.l"
+#line 19 "gvlogo.l"
 ECHO;
 	YY_BREAK
-#line 743 "lex.yy.c"
+#line 746 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1744,6 +1747,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 16 "gvlogo.l"
+#line 19 "gvlogo.l"
 
 
