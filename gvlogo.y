@@ -70,6 +70,7 @@ void shutdown();
 %token NUMBER
 %token END
 %token SAVE
+%token WHERE
 %token PLUS SUB MULT DIV
 %token<s> STRING QSTRING
 %type<f> expression expression_list NUMBER
@@ -85,17 +86,18 @@ statement_list:		statement
 statement:		command SEP					{ prompt(); }
 		|	error '\n' 					{ yyerrok; prompt(); }
 		;
-command:		PENUP						{ penup(); }
-		| 			PENDOWN					{pendown();}
-		|				PRINT STRING												{output($2); /*This might be wrong; may need to have it take a variable number of arguments. See cdir*/}
+command:		PENUP						{ printf("Penis up\n"); penup(); }
+		| 			PENDOWN					{printf("Penis down\n"); pendown();}
+		|				PRINT STRING													{output($2); /*This might be wrong; may need to have it take a variable number of arguments. See cdir*/}
 		|				CHANGE_COLOR NUMBER NUMBER NUMBER		{change_color($2,$3,$4);}
 		|				COLOR NUMBER NUMBER NUMBER					{change_color($2,$3,$4); /*Are these just the same thing?*/}
 		|				CLEAR						{clear();}
 		|				TURN NUMBER 						{turn($2);}
 		|				LOOP						{printf("Loop functionality coming soon!\n");}
-		|				MOVE NUMBER 						{move($2);}
+		|				MOVE NUMBER 		{move((int) $2);}
 		|				END 						{shutdown();}
 		|				SAVE STRING 						{save($2); /*May need to make use of STRING here*/}
+		|				WHERE 				{where();}
 		|				SEP 						{;}
 		;
 expression_list:	expression
@@ -151,10 +153,11 @@ void go2(double newX, double newY) {
 }
 
 void where() {
-		printf("Current location: x = %lf; y = %lf", x, y);
+		printf("Current location: x = %lf; y = %lf\n", x, y);
 }
 
 void move(int num){
+	printf("Moving %d in direction %lf\n", num, direction);
 	event.type = DRAW_EVENT;
 	event.user.code = 1;
 	event.user.data1 = num;
@@ -170,6 +173,7 @@ void turn(int dir){
 
 void output(const char* s){
 	printf("%s\n", s);
+	//free(s);
 }
 
 void change_color(int r, int g, int b){
@@ -195,6 +199,8 @@ void startup(){
 
 	//rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
 	rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE);
+	SDL_SetRenderTarget(rend, NULL);
+	SDL_SetRenderDrawColor(rend, 0, 255, 0, 127);
 	SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
 	texture = SDL_CreateTexture(rend, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, WIDTH, HEIGHT);
 	if(texture == NULL){
