@@ -71,6 +71,8 @@ void shutdown();
 %token END
 %token SAVE
 %token WHERE
+%token GOTO
+%token EXIT
 %token PLUS SUB MULT DIV
 %token<s> STRING QSTRING
 %type<f> expression expression_list NUMBER
@@ -86,18 +88,20 @@ statement_list:		statement
 statement:		command SEP					{ prompt(); }
 		|	error '\n' 					{ yyerrok; prompt(); }
 		;
-command:		PENUP						{ printf("Penis up\n"); penup(); }
-		| 			PENDOWN					{printf("Penis down\n"); pendown();}
+command:		PENUP						{ printf("Pen is up\n"); penup(); }
+		| 			PENDOWN					{printf("Pen is down\n"); pendown();}
 		|				PRINT STRING													{output($2); /*This might be wrong; may need to have it take a variable number of arguments. See cdir*/}
-		|				CHANGE_COLOR NUMBER NUMBER NUMBER		{change_color($2,$3,$4);}
-		|				COLOR NUMBER NUMBER NUMBER					{change_color($2,$3,$4); /*Are these just the same thing?*/}
+		|				CHANGE_COLOR NUMBER NUMBER NUMBER		{change_color((int) $2, (int) $3, (int) $4);}
+		|				COLOR NUMBER NUMBER NUMBER					{change_color((int) $2, (int) $3, (int) $4); /*Are these just the same thing?*/}
 		|				CLEAR						{clear();}
-		|				TURN NUMBER 						{turn($2);}
+		|				TURN NUMBER 						{turn((int) $2);}
 		|				LOOP						{printf("Loop functionality coming soon!\n");}
 		|				MOVE NUMBER 		{move((int) $2);}
 		|				END 						{shutdown();}
 		|				SAVE STRING 						{save($2); /*May need to make use of STRING here*/}
 		|				WHERE 				{where();}
+		|				GOTO NUMBER NUMBER {go2((int) $2, (int) $3);}
+		|				EXIT 				{shutdown();}
 		|				SEP 						{;}
 		;
 expression_list:	expression
@@ -119,7 +123,8 @@ int main(int argc, char** argv){
 
 int yyerror(const char* s){
 	printf("Error: %s\n", s);
-	return -1;
+	exit(1);
+	//return -1;
 };
 
 void prompt(){
@@ -168,6 +173,7 @@ void turn(int dir){
 	event.type = PEN_EVENT;
 	event.user.code = 2;
 	event.user.data1 = dir;
+	printf("Turn has turned by %d.\n", dir);
 	SDL_PushEvent(&event);
 }
 
@@ -191,6 +197,9 @@ void clear(){
 }
 
 void startup(){
+	current_color.r = 0;
+	current_color.g = 255;
+	current_color.b = 0;
 	SDL_Init(SDL_INIT_VIDEO);
 	window = SDL_CreateWindow("GV-Logo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
 	if (window == NULL){
@@ -199,8 +208,6 @@ void startup(){
 
 	//rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
 	rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE | SDL_RENDERER_TARGETTEXTURE);
-	SDL_SetRenderTarget(rend, NULL);
-	SDL_SetRenderDrawColor(rend, 0, 255, 0, 127);
 	SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
 	texture = SDL_CreateTexture(rend, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, WIDTH, HEIGHT);
 	if(texture == NULL){
@@ -209,6 +216,9 @@ void startup(){
 	}
 	SDL_SetRenderTarget(rend, texture);
 	SDL_RenderSetScale(rend, 3.0, 3.0);
+
+	SDL_SetRenderTarget(rend, NULL);
+	SDL_SetRenderDrawColor(rend, 0, 255, 0, 127);
 
 	background_id = SDL_CreateThread(run, "Parser thread", (void*)NULL);
 	if(background_id == NULL){

@@ -19,6 +19,10 @@ extern void yyerror(const char* s);
 "turn" {return TURN;}
 "move" {return MOVE;}
 "where" {return WHERE;}
+"goto"  {return GOTO;}
+"exit"  {return END;}
+"clear" {return CLEAR;}
+"color" {return COLOR;}
 
 \"[a-zA-Z0-9\ _!.,/\\]+\" {yylval.s = yytext; return STRING;}
 [0-9]+   {yylval.f = atof(yytext); return NUMBER;}
