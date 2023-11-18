@@ -131,9 +131,11 @@ void setNumValue(const char* name, float newVal);
 %%
 
 program:		statement_list END				{ printf("Program complete."); shutdown(); exit(0); }
+		|	error '\n' 					{ yyerrok; prompt(); }
 		;
 statement_list:		statement
 		|	statement statement_list
+		|	error '\n' 					{ yyerrok; prompt(); }
 		;
 statement:		command SEP					{ prompt(); }
 		|	error '\n' 					{ yyerrok; prompt(); }
@@ -153,8 +155,8 @@ command:		PENUP						{ printf("Pen is up\n"); penup(); }
 		|				GOTO NUMBER NUMBER {go2((int) $2, (int) $3);}
 		|				EXIT 				{shutdown();}
 		|				SEP 						{ ; }
-		|
 		|	error '\n' 					{ yyerrok; prompt();/*not sure if this will work*/ }
+		|	error 					{ yyerrok;/*This apparently does work*/ }
 		;
 expression_list:	expression
 		| 	expression expression_list
@@ -426,7 +428,7 @@ void addString(const char* name, const char* str) {
 	}
 
 	strcpy(stringVars[stringCount].name, name);
-	strcpy(stringVars[stringCount++].contents, str)
+	strcpy(stringVars[stringCount++].contents, str);
 }
 
 void getStringValue(const char* name) {
@@ -441,7 +443,7 @@ void getStringValue(const char* name) {
 void setStringValue(const char* name, const char* newVal) {
 	for (int i = 0; i < stringCount; i++) {
 		if (strcmp(stringVars[i].name, name)) {
-			strncpy(stringVars[i].ccontents, newVal, strlen(newVal));
+			strncpy(stringVars[i].contents, newVal, strlen(newVal));
 			return;
 		}
 	}
@@ -467,7 +469,7 @@ void addNum(const char* name, float value) {
 float getNumVal(const char* name) {
 	for (int i = 0; i < numCount; i++)
 		if (strcmp(numVars[i].name, name))
-			return numVars[i].value;
+			return numVars[i].contents;
 
 	printf("Unable to find numeric variable: %s\n", name);
 	return 0.0; //this should theoretically be unreachable if we design this shit right
