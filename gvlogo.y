@@ -1,12 +1,20 @@
 %{
 #define WIDTH 640
 #define HEIGHT 480
+#define COLOR_MAX 20
+#define VARMAX 100
 
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_thread.h>
+
+enum dataType {
+	ColorType,
+	Numeric,
+	StringType
+};
 
 static SDL_Window* window;
 static SDL_Renderer* rend;
@@ -18,11 +26,37 @@ static const int PEN_EVENT = SDL_USEREVENT + 1;
 static const int DRAW_EVENT = SDL_USEREVENT + 2;
 static const int COLOR_EVENT = SDL_USEREVENT + 3;
 
+//May as well do all of our data types here
+
 typedef struct color_t {
 	unsigned char r;
 	unsigned char g;
 	unsigned char b;
 } color;
+
+typedef struct {
+	color col;
+	char name[32];
+} namedColor;
+
+typedef struct {
+	char name[32];
+	char contents[512];
+} string;
+
+typedef struct {
+	char name[32];
+	float contents;
+} num;
+
+static namedColor colorTable[COLOR_MAX]; //might want to load some initial colors into here but we'll come back to This
+static int colorCount = 0;
+
+static string stringVars[VARMAX];
+static int stringCount = 0;
+
+static num numVars[VARMAX];
+static int numCount = 0;
 
 static color current_color;
 static double x = WIDTH / 2;
@@ -47,6 +81,21 @@ void change_color(int r, int g, int b);
 void clear();
 void save(const char* path);
 void shutdown();
+
+//functions for the variable handling
+void addColor(const char* name, int r, int g, int b);
+void getColorValues(const char* name);
+void setColorValues(const char* name, char which, int value); //we'll use a char to determine which of these we want to set
+
+int check4Color(const char* name);
+
+void addString(const char* name, const char* str);
+void getStringValue(const char* name);
+void setStringValue(const char* name, const char* newVal);
+
+void addNum(const char* name, float value);
+float getNumVal(const char* name); //might change this one to a float but I kind of want to keep consistency here for Now
+void setNumValue(const char* name, float newVal);
 
 %}
 
@@ -73,7 +122,8 @@ void shutdown();
 %token WHERE
 %token GOTO
 %token EXIT
-%token PLUS SUB MULT DIV
+%token PLUS SUB MULT DIV EQUALS
+%token NUM STRINGVAR
 %token<s> STRING QSTRING
 %type<f> expression expression_list NUMBER
 
@@ -92,7 +142,7 @@ command:		PENUP						{ printf("Pen is up\n"); penup(); }
 		| 			PENDOWN					{printf("Pen is down\n"); pendown();}
 		|				PRINT STRING													{output($2); /*This might be wrong; may need to have it take a variable number of arguments. See cdir*/}
 		|				CHANGE_COLOR NUMBER NUMBER NUMBER		{change_color((int) $2, (int) $3, (int) $4);}
-		|				COLOR NUMBER NUMBER NUMBER					{change_color((int) $2, (int) $3, (int) $4); /*Are these just the same thing?*/}
+		|				COLOR STRING EQUALS NUMBER NUMBER NUMBER					{(!check4Color($2)) ? addColor($2, (int) $4, (int) $5, (int) $6) : yyerrok; /*Are these just the same thing?*/}
 		|				CLEAR						{clear();}
 		|				TURN NUMBER 						{turn((int) $2);}
 		|				LOOP						{printf("Loop functionality coming soon!\n");}
@@ -102,7 +152,9 @@ command:		PENUP						{ printf("Pen is up\n"); penup(); }
 		|				WHERE 				{where();}
 		|				GOTO NUMBER NUMBER {go2((int) $2, (int) $3);}
 		|				EXIT 				{shutdown();}
-		|				SEP 						{;}
+		|				SEP 						{ ; }
+		|
+		|	error '\n' 					{ yyerrok; prompt();/*not sure if this will work*/ }
 		;
 expression_list:	expression
 		| 	expression expression_list
@@ -123,8 +175,8 @@ int main(int argc, char** argv){
 
 int yyerror(const char* s){
 	printf("Error: %s\n", s);
-	exit(1);
-	//return -1;
+	//exit(1);
+	return -1;
 };
 
 void prompt(){
@@ -290,7 +342,7 @@ void startup(){
 
 int run(void* data){
 	prompt();
-	yyparse();
+	return yyparse();
 }
 
 void shutdown(){
@@ -305,4 +357,127 @@ void save(const char* path){
 	SDL_RenderReadPixels(rend, NULL, SDL_PIXELFORMAT_ARGB8888, surface->pixels, surface->pitch);
 	SDL_SaveBMP(surface, path);
 	SDL_FreeSurface(surface);
+}
+
+//And I guess we'll just throw our functions for variables down here.
+void addColor(const char* name, int r, int g, int b) {
+	if (colorCount >= COLOR_MAX) {
+		printf("You've made too many colors, JAck\n");
+		return;
+	}
+
+	if (strlen(name) > 32) {
+		printf("That name is too long");
+		return;
+	}
+
+	strcpy(colorTable[colorCount].name, name);
+	colorTable[colorCount].col.r = r;
+	colorTable[colorCount].col.g = g;
+	colorTable[colorCount].col.b = b;
+	colorCount++;
+}
+
+void getColorValues(const char* name) {
+	for (int i = 0; i < colorCount; i++) {
+		if (strcmp(colorTable[i].name, name)) {
+			printf("Color %s: r: %d, g: %d, b: %d\n", colorTable[i].name, colorTable[i].col.r,
+				colorTable[i].col.g, colorTable[i].col.b);
+			return;
+		}
+	}
+	printf("Unable to find color: %s", name);
+}
+
+void setColorValues(const char* name, char which, int value) {
+	for (int i = 0; i < colorCount; i++) {
+		if (strcmp(colorTable[i].name, name)) {
+			switch (which) {
+				case 'r': colorTable[i].col.r = value; break;
+				case 'g': colorTable[i].col.g = value; break;
+				case 'b': colorTable[i].col.b = value; break;
+				default: printf("Invalid which value detected\n"); return;
+			}
+			printf("Color %s values changed to (%d,%d,%d)\n", name, colorTable[i].col.r, colorTable[i].col.g, colorTable[i].col.b);
+			return;
+		}
+	}
+
+	printf("Color %s not found.\n", name);
+}
+
+int check4Color(const char* name) {
+	for (int i = 0; i < colorCount; i++) {
+		if (strcmp(colorTable[i].name, name))
+			return 1;
+	}
+	return 0;
+}
+
+void addString(const char* name, const char* str) {
+	if (stringCount >= VARMAX) {
+		printf("You have declared too many strings");
+		return;
+	}
+
+	if (strlen(name) > 32) {
+		printf("Name declaration too long\n");
+		return;
+	}
+
+	strcpy(stringVars[stringCount].name, name);
+	strcpy(stringVars[stringCount++].contents, str)
+}
+
+void getStringValue(const char* name) {
+	for (int i = 0; i < stringCount; i++)
+		if (strcmp(stringVars[i].name, name)) {
+			printf("%s\n", stringVars[i].contents);
+			return;
+		}
+	printf("No variable found: %s", name);
+}
+
+void setStringValue(const char* name, const char* newVal) {
+	for (int i = 0; i < stringCount; i++) {
+		if (strcmp(stringVars[i].name, name)) {
+			strncpy(stringVars[i].ccontents, newVal, strlen(newVal));
+			return;
+		}
+	}
+
+	printf("No variable found: %s\n", name);
+}
+
+void addNum(const char* name, float value) {
+	if (numCount >= VARMAX) {
+		printf("You have made too many numeric variables\n");
+		return;
+	}
+
+	if (strlen(name) > 32) {
+		printf("This name is too long\n");
+		return;
+	}
+
+	strcpy(numVars[numCount].name, name);
+	numVars[numCount++].contents = value;
+}
+
+float getNumVal(const char* name) {
+	for (int i = 0; i < numCount; i++)
+		if (strcmp(numVars[i].name, name))
+			return numVars[i].value;
+
+	printf("Unable to find numeric variable: %s\n", name);
+	return 0.0; //this should theoretically be unreachable if we design this shit right
+}
+void setNumValue(const char* name, float newVal) {
+	for (int i = 0; i < numCount; i++)
+		if (strcmp(numVars[i].name, name)) {
+			numVars[i].contents = newVal;
+			return;
+		}
+
+	printf("Unable to find numeric value\n");
 }

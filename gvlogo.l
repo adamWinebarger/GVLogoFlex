@@ -23,6 +23,7 @@ extern void yyerror(const char* s);
 "exit"  {return END;}
 "clear" {return CLEAR;}
 "color" {return COLOR;}
+"change_color" {return CHANGE_COLOR;}
 
 \"[a-zA-Z0-9\ _!.,/\\]+\" {yylval.s = yytext; return STRING;}
 [0-9]+   {yylval.f = atof(yytext); return NUMBER;}
@@ -30,6 +31,7 @@ extern void yyerror(const char* s);
 
 "+" {return PLUS;}
 ";" {return SEP;}
+"=" {return EQUALS;}
 
 .			{ yyerror("Lexing Syntax error.\n"); }
 
