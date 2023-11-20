@@ -75,10 +75,15 @@ extern int yydebug;
     MULT = 276,                    /* MULT  */
     DIV = 277,                     /* DIV  */
     EQUALS = 278,                  /* EQUALS  */
-    NUM = 279,                     /* NUM  */
-    STRINGVAR = 280,               /* STRINGVAR  */
-    STRING = 281,                  /* STRING  */
-    QSTRING = 282                  /* QSTRING  */
+    QUOTE = 279,                   /* QUOTE  */
+    OPENPAREN = 280,               /* OPENPAREN  */
+    CLOSEDPAREN = 281,             /* CLOSEDPAREN  */
+    COMMA = 282,                   /* COMMA  */
+    NUM = 283,                     /* NUM  */
+    STRINGVAR = 284,               /* STRINGVAR  */
+    STRING = 285,                  /* STRING  */
+    QSTRING = 286,                 /* QSTRING  */
+    VAR = 287                      /* VAR  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -87,12 +92,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 102 "gvlogo.y"
+#line 111 "gvlogo.y"
 
 	float f;
 	char* s;
 
-#line 96 "gvlogo.tab.h"
+#line 101 "gvlogo.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

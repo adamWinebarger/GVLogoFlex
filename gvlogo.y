@@ -85,17 +85,26 @@ void shutdown();
 //functions for the variable handling
 void addColor(const char* name, int r, int g, int b);
 void getColorValues(const char* name);
-void setColorValues(const char* name, char which, int value); //we'll use a char to determine which of these we want to set
+void setColorValues(const char* name, int r, int g, int b); //we'll use a char to determine which of these we want to set
 
 int check4Color(const char* name);
 
 void addString(const char* name, const char* str);
-void getStringValue(const char* name);
+char* getStringValue(const char* name);
 void setStringValue(const char* name, const char* newVal);
 
-void addNum(const char* name, float value);
+int check4String(const char* name);
+
+void addNum(char* name, float value);
 float getNumVal(const char* name); //might change this one to a float but I kind of want to keep consistency here for Now
 void setNumValue(const char* name, float newVal);
+int check4Num(char* name);
+void numNotFound(char* name) {printf("Error! Numeric variable not found: %s\n", name);}
+void stringNotFound(char * name) {printf("Error! String var not found: %s\n", name);}
+void colorNotFound(char *name) {printf("Error! Color not found: %s\n", name);}
+
+void printVariableContents(char* name);
+void expressionOutput(float f);
 
 %}
 
@@ -122,50 +131,71 @@ void setNumValue(const char* name, float newVal);
 %token WHERE
 %token GOTO
 %token EXIT
-%token PLUS SUB MULT DIV EQUALS
+%token PLUS SUB MULT DIV EQUALS QUOTE OPENPAREN CLOSEDPAREN COMMA
 %token NUM STRINGVAR
-%token<s> STRING QSTRING
+%token<s> STRING QSTRING VAR
 %type<f> expression expression_list NUMBER
 
 
 %%
 
 program:		statement_list END				{ printf("Program complete."); shutdown(); exit(0); }
-		|	error '\n' 					{ yyerrok; prompt(); }
+
 		;
 statement_list:		statement
 		|	statement statement_list
-		|	error '\n' 					{ yyerrok; prompt(); }
 		;
 statement:		command SEP					{ prompt(); }
-		|	error '\n' 					{ yyerrok; prompt(); }
+		|	error '\n'					{ yyerrok; prompt(); }
 		;
 command:		PENUP						{ printf("Pen is up\n"); penup(); }
 		| 			PENDOWN					{printf("Pen is down\n"); pendown();}
-		|				PRINT STRING													{output($2); /*This might be wrong; may need to have it take a variable number of arguments. See cdir*/}
+		|				PRINT QUOTE STRING QUOTE													{output($3); /*This might be wrong; may need to have it take a variable number of arguments. See cdir*/}
+		|				PRINT VAR {printVariableContents($2);	}
+		|				PRINT expression_list {printf("%f\n", $2);}
+		|				VAR {printVariableContents($1);}
+		|				expression_list {printf("%f\n", $1);}
+		|				STRING {output($1);}
 		|				CHANGE_COLOR NUMBER NUMBER NUMBER		{change_color((int) $2, (int) $3, (int) $4);}
-		|				COLOR STRING EQUALS NUMBER NUMBER NUMBER					{(!check4Color($2)) ? addColor($2, (int) $4, (int) $5, (int) $6) : yyerrok; /*Are these just the same thing?*/}
+		|				CHANGE_COLOR VAR {
+			if (check4Color($2) != -1) {
+				int i = check4Color($2);
+				change_color(colorTable[i].col.r, colorTable[i].col.g, colorTable[i].col.b);
+			} else {colorNotFound($2);}
+		}
+		|				COLOR VAR EQUALS NUMBER NUMBER NUMBER					{((check4Color($2)) == -1) ? addColor($2, (int) $4, (int) $5, (int) $6) : colorNotFound($2); /*Are these just the same thing?*/}
+		|				VAR EQUALS NUMBER NUMBER NUMBER {(check4Color($1)) >= 0 ? setColorValues($1, (int) $3, (int) $4, (int) $5) : colorNotFound($1);}
 		|				CLEAR						{clear();}
-		|				TURN NUMBER 						{turn((int) $2);}
+		|				TURN expression 						{turn((int) $2);}
+		|				TURN VAR {(check4Num($2) != -1) ? turn((int) getNumVal($2)) : numNotFound($2);}
 		|				LOOP						{printf("Loop functionality coming soon!\n");}
-		|				MOVE NUMBER 		{move((int) $2);}
+		|				MOVE expression 		{move((int) $2);}
+		| 			MOVE VAR {(check4Num($2) != -1) ? move((int) getNumVal($2)) : numNotFound($2);}
 		|				END 						{shutdown();}
-		|				SAVE STRING 						{save($2); /*May need to make use of STRING here*/}
+		|				SAVE VAR 						{save($2); /*May need to make use of STRING here*/}
 		|				WHERE 				{where();}
-		|				GOTO NUMBER NUMBER {go2((int) $2, (int) $3);}
+		|				GOTO expression expression {go2((int) $2, (int) $3);}
 		|				EXIT 				{shutdown();}
 		|				SEP 						{ ; }
-		|	error '\n' 					{ yyerrok; prompt();/*not sure if this will work*/ }
-		|	error 					{ yyerrok;/*This apparently does work*/ }
+		|				STRINGVAR VAR EQUALS STRING {((check4String($2)) == -1) ? addString($2, $4) : exit(1);}
+		| 			VAR EQUALS STRING {check4String($1) > -1 ? setStringValue($1, $3) : yyerrok;}
+		|				NUM VAR EQUALS expression_list {check4Num($2) == -1 ? addNum($2, $4) : yyerrok;}
+		|				VAR EQUALS expression_list {check4Num($1) > -1? setNumValue($1, $3) : yyerrok;}
 		;
 expression_list:	expression
 		| 	expression expression_list
+
 		;
 expression:		NUMBER PLUS expression				{ $$ = $1 + $3; }
 		|	NUMBER MULT expression				{ $$ = $1 * $3; }
 		|	NUMBER SUB expression				{ $$ = $1 - $3; }
 		|	NUMBER DIV expression				{ $$ = $1 / $3; }
-		|	NUMBER
+		|	NUMBER {$$ = $1;}
+		| VAR PLUS expression {check4Num($1) != -1 ? $$ = getNumVal($1) + $3 : numNotFound($1);}
+		| VAR MULT expression {check4Num($1) != -1 ? $$ = getNumVal($1)* $3 : numNotFound($1);}
+		| VAR SUB expression {check4Num($1) != -1 ? $$ = getNumVal($1) - $3 : numNotFound($1);}
+		| VAR DIV expression {check4Num($1) != -1 ? $$ = getNumVal($1) / $3 : numNotFound($1);}
+		| VAR {check4Num($1) != -1 ? $$ = getNumVal($1) : numNotFound($1);}
 		;
 
 %%
@@ -176,9 +206,21 @@ int main(int argc, char** argv){
 }
 
 int yyerror(const char* s){
+
 	printf("Error: %s\n", s);
-	//exit(1);
+	/* if (strcmp(s, "syntax error") == 0)
+		printf("Input ;; to continue...\n"); */
 	return -1;
+
+	/* printf("Error: %s\n", s);
+
+    // Advance the input until a newline or a token that can continue parsing
+    while (1) {
+        int token = yylex();
+        if (token == '\n' || token == 0 ) {
+            return -1;  // Continue parsing after newline or end of file
+        }
+    } */
 };
 
 void prompt(){
@@ -382,7 +424,7 @@ void addColor(const char* name, int r, int g, int b) {
 
 void getColorValues(const char* name) {
 	for (int i = 0; i < colorCount; i++) {
-		if (strcmp(colorTable[i].name, name)) {
+		if (strcmp(colorTable[i].name, name) == 0) {
 			printf("Color %s: r: %d, g: %d, b: %d\n", colorTable[i].name, colorTable[i].col.r,
 				colorTable[i].col.g, colorTable[i].col.b);
 			return;
@@ -391,29 +433,28 @@ void getColorValues(const char* name) {
 	printf("Unable to find color: %s", name);
 }
 
-void setColorValues(const char* name, char which, int value) {
+int check4Color(const char* name) {
+	for (int i = 0; i < colorCount; i++)
+		if (strcmp(colorTable[i].name, name) == 0)
+			return i;
+
+	return -1;
+}
+
+void setColorValues(const char* name, int r, int g, int b) {
 	for (int i = 0; i < colorCount; i++) {
-		if (strcmp(colorTable[i].name, name)) {
-			switch (which) {
-				case 'r': colorTable[i].col.r = value; break;
-				case 'g': colorTable[i].col.g = value; break;
-				case 'b': colorTable[i].col.b = value; break;
-				default: printf("Invalid which value detected\n"); return;
-			}
+		if (strcmp(colorTable[i].name, name) == 0) {
+
+			colorTable[i].col.r = r;
+			colorTable[i].col.g = b;
+			colorTable[i].col.b = g;
+
 			printf("Color %s values changed to (%d,%d,%d)\n", name, colorTable[i].col.r, colorTable[i].col.g, colorTable[i].col.b);
 			return;
 		}
 	}
 
 	printf("Color %s not found.\n", name);
-}
-
-int check4Color(const char* name) {
-	for (int i = 0; i < colorCount; i++) {
-		if (strcmp(colorTable[i].name, name))
-			return 1;
-	}
-	return 0;
 }
 
 void addString(const char* name, const char* str) {
@@ -427,17 +468,19 @@ void addString(const char* name, const char* str) {
 		return;
 	}
 
+	//printf("String %s stored as %s", name, str);
 	strcpy(stringVars[stringCount].name, name);
 	strcpy(stringVars[stringCount++].contents, str);
 }
 
-void getStringValue(const char* name) {
+char* getStringValue(const char* name) {
 	for (int i = 0; i < stringCount; i++)
-		if (strcmp(stringVars[i].name, name)) {
-			printf("%s\n", stringVars[i].contents);
-			return;
+		if (strcmp(stringVars[i].name, name) == 0) {
+			//printf("%s\n", stringVars[i].contents);
+			return stringVars[i].contents;
 		}
-	printf("No variable found: %s", name);
+		printf("No variable found: %s", name);
+		return NULL;
 }
 
 void setStringValue(const char* name, const char* newVal) {
@@ -451,7 +494,17 @@ void setStringValue(const char* name, const char* newVal) {
 	printf("No variable found: %s\n", name);
 }
 
-void addNum(const char* name, float value) {
+int check4String(const char* name) {
+	for (int i = 0; i < stringCount; i++) {
+		if (strcmp(stringVars[i].name, name) == 0)
+			return i;
+	}
+
+	//printf("Unable to find String variable: %s\n", name);
+	return -1;
+}
+
+void addNum(char* name, float value) {
 	if (numCount >= VARMAX) {
 		printf("You have made too many numeric variables\n");
 		return;
@@ -462,13 +515,15 @@ void addNum(const char* name, float value) {
 		return;
 	}
 
+	//printf("variable %s set to %d\n", name, value);
 	strcpy(numVars[numCount].name, name);
-	numVars[numCount++].contents = value;
+	numVars[numCount].contents = value;
+	numCount++;
 }
 
 float getNumVal(const char* name) {
 	for (int i = 0; i < numCount; i++)
-		if (strcmp(numVars[i].name, name))
+		if (strcmp(numVars[i].name, name) == 0)
 			return numVars[i].contents;
 
 	printf("Unable to find numeric variable: %s\n", name);
@@ -476,10 +531,40 @@ float getNumVal(const char* name) {
 }
 void setNumValue(const char* name, float newVal) {
 	for (int i = 0; i < numCount; i++)
-		if (strcmp(numVars[i].name, name)) {
+		if (strcmp(numVars[i].name, name) == 0) {
 			numVars[i].contents = newVal;
 			return;
 		}
 
 	printf("Unable to find numeric value\n");
+}
+
+int check4Num(char* name) {
+	for (int i = 0; i < numCount; i++)
+		if (strcmp(numVars[i].name, name) == 0)
+			return i;
+
+	return -1;
+}
+
+void printVariableContents(char* name) {
+	int index;
+	if ((index = check4Color(name)) != -1) {
+		printf("Color %s: r: %d, g: %d, b: %d\n", colorTable[index].name,
+			colorTable[index].col.r, colorTable[index].col.g, colorTable[index].col.b);
+		return;
+	} else if ((index = check4String(name)) != -1) {
+		printf("%s\n", stringVars[index].contents);
+		return;
+	} else if ((index = check4Num(name)) != -1) {
+		//printf("%s, %d\n", name, index);
+		printf("%f\n", numVars[index].contents);
+		return;
+	}
+
+	printf("Unable to find variable: %s\n", name);
+}
+
+void expressionOutput(float f) {
+	printf("%f\n", f);
 }
