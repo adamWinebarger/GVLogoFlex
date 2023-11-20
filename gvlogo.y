@@ -208,8 +208,10 @@ int main(int argc, char** argv){
 int yyerror(const char* s){
 
 	printf("Error: %s\n", s);
-	/* if (strcmp(s, "syntax error") == 0)
-		printf("Input ;; to continue...\n"); */
+	if (strcmp(s, "syntax error") == 0)
+		exit(1);
+	if (strcmp(s, "Lexing Syntax error.") == 0)
+		printf("Input ;; to continue...\n");
 	return -1;
 
 	/* printf("Error: %s\n", s);
